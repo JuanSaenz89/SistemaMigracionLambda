@@ -1,16 +1,16 @@
 import zipfile
 from xml.dom import minidom
 
-
 class LectorKMZ:
 
     def __init__(self):
-        pass
+        self.dict_objetos = {}
+        self.contador = 1
 
     def start(self, ruta_kmz):
         contenido_kml = self.extraer_kml_desde_kmz(ruta_kmz)
         doc_kml = minidom.parseString(contenido_kml)
-    # Busca e imprime la información de cada Placemark
+        # Busca e imprime la información de cada Placemark
         self.buscar_informacion_kml(doc_kml)
 
     def extraer_kml_desde_kmz(self, ruta_kmz):
@@ -44,8 +44,8 @@ class LectorKMZ:
 
         return coordenadas
 
-    def buscar_informacion_kml(self, doc_kml):
-    # Obtén la lista de elementos "Placemark" en el documento KML
+    def buscar_informacion_kml(self, doc_kml, carpeta_padre=None):
+        # Obtén la lista de elementos "Placemark" en el documento KML
         placemarks = doc_kml.getElementsByTagName('Placemark')
 
         for placemark in placemarks:
@@ -66,13 +66,30 @@ class LectorKMZ:
             # Extraer las coordenadas del Placemark
             coordenadas = self.obtener_coordenadas_placemark(placemark)
 
-            # Imprime la información del Placemark, incluyendo las coordenadas
-            print(f"Nombre: {nombre}")
-            print(f"Descripción: {descripcion}")
-            print("Coordenadas:")
-            for linea in coordenadas:
-                for coordenada in linea:
-                    print(coordenada)
-            print("-" * 20)
+            # Almacena la información del Placemark en el diccionario
+            self.dict_objetos[self.contador] = {
+                "Nombre": nombre,
+                "Descripción": descripcion,
+                "Coordenadas": coordenadas[0],
+                "CarpetaPadre": carpeta_padre
+            }
 
-    # Analiza el contenido KML utilizando minidom
+
+            # Incrementa el contador para la siguiente entrada en el diccionario
+            self.contador += 1
+
+        # Buscar subcarpetas (Folders) en el elemento
+        folders = doc_kml.getElementsByTagName('Folder')
+        for folder in folders:
+            # Llamada recursiva para manejar los elementos dentro de la subcarpeta
+            nombre_carpeta = folder.getElementsByTagName('name')
+            if nombre_carpeta:
+                nombre_carpeta = nombre_carpeta[0].firstChild.nodeValue
+            else:
+                nombre_carpeta = "Sin nombre"
+
+            self.buscar_informacion_kml(folder, carpeta_padre=nombre_carpeta)
+
+# Suponiendo que ya tienes el contenido_kml del archivo KML
+
+    
