@@ -6,6 +6,8 @@ class LectorKMZ:
     def __init__(self):
         self.dict_objetos = {}
         self.contador = 1
+        self.fficonos = open('Iconos.txt','a')
+        self.lista_iconos = []
 
     def start(self, ruta_kmz):
         contenido_kml = self.extraer_kml_desde_kmz(ruta_kmz)
@@ -44,7 +46,18 @@ class LectorKMZ:
 
         return coordenadas
 
-    def buscar_informacion_kml(self, doc_kml, carpeta_padre=None):
+    def obtener_estilo_placemark(self, placemark):
+        estilo = {}
+
+        # Buscar el subelemento Style
+        styles = placemark.getElementsByTagName('styleUrl')
+        if styles:
+            estilo = styles[0].firstChild.nodeValue
+        return estilo
+        
+
+
+    def buscar_informacion_kml(self, doc_kml):
         # Obtén la lista de elementos "Placemark" en el documento KML
         placemarks = doc_kml.getElementsByTagName('Placemark')
 
@@ -54,7 +67,8 @@ class LectorKMZ:
             if nombres:
                 nombre = nombres[0].firstChild.nodeValue
             else:
-                nombre = "Sin nombre"
+                nombre = f"Sin nombre_{self.contador}"
+                self.contador += 1
 
             # Extrae la descripción del Placemark si está presente
             descripciones = placemark.getElementsByTagName('description')
@@ -65,31 +79,23 @@ class LectorKMZ:
 
             # Extraer las coordenadas del Placemark
             coordenadas = self.obtener_coordenadas_placemark(placemark)
+            # Obtener información del icono
+            estilo = self.obtener_estilo_placemark(placemark)
 
-            # Almacena la información del Placemark en el diccionario
+            # Almacena la información del Placemark en el diccionario solo si no es una carpeta sin nombre
             self.dict_objetos[self.contador] = {
                 "Nombre": nombre,
                 "Descripción": descripcion,
                 "Coordenadas": coordenadas[0],
-                "CarpetaPadre": carpeta_padre
+                "Estilo": estilo
             }
-
-
-            # Incrementa el contador para la siguiente entrada en el diccionario
+            print(f"Nombre: {nombre}")
+            self.fficonos.write(f'{nombre}\n')
+            print(f"Descripción: {descripcion}")
+            print("Coordenadas:")
+            print(coordenadas[0])
+            print(f"Estilo del Icono: {estilo}")
+            self.lista_iconos.append(estilo)
+            print("-" * 20)
+            # Incrementa el contador solo si se almacena en el diccionario
             self.contador += 1
-
-        # Buscar subcarpetas (Folders) en el elemento
-        folders = doc_kml.getElementsByTagName('Folder')
-        for folder in folders:
-            # Llamada recursiva para manejar los elementos dentro de la subcarpeta
-            nombre_carpeta = folder.getElementsByTagName('name')
-            if nombre_carpeta:
-                nombre_carpeta = nombre_carpeta[0].firstChild.nodeValue
-            else:
-                nombre_carpeta = "Sin nombre"
-
-            self.buscar_informacion_kml(folder, carpeta_padre=nombre_carpeta)
-
-# Suponiendo que ya tienes el contenido_kml del archivo KML
-
-    
