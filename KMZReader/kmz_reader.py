@@ -6,8 +6,6 @@ class LectorKMZ:
     def __init__(self):
         self.dict_objetos = {}
         self.contador = 1
-        self.fficonos = open('Iconos.txt','a')
-        self.lista_iconos = []
 
     def start(self, ruta_kmz):
         contenido_kml = self.extraer_kml_desde_kmz(ruta_kmz)
@@ -89,13 +87,5 @@ class LectorKMZ:
                 "Coordenadas": coordenadas[0],
                 "Estilo": estilo
             }
-            print(f"Nombre: {nombre}")
-            self.fficonos.write(f'{nombre}\n')
-            print(f"Descripción: {descripcion}")
-            print("Coordenadas:")
-            print(coordenadas[0])
-            print(f"Estilo del Icono: {estilo}")
-            self.lista_iconos.append(estilo)
-            print("-" * 20)
             # Incrementa el contador solo si se almacena en el diccionario
             self.contador += 1
