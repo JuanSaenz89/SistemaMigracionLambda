@@ -2,17 +2,17 @@ from scipy.spatial import cKDTree
 import time
 
 class MigrarInfo:
+    ffo = open('O.txt','a')
+    ffocfg = open('OCFG.txt','a')
+    ffval = open('VAL.txt','a')
+    ffgeoidx = open('GEOIDX.txt','a')
+    ffv = open('V.txt','a')
+    ffsidx = open('SIDX.txt','a')
+    ffco = open('CO.txt','a')
     
-    def __init__(self) -> None:
-        self.cID = '122'
-        self.ffo = open('O.txt','a')
-        self.ffocfg = open('OCFG.txt','a')
-        self.ffval = open('VAL.txt','a')
-        self.ffgeoidx = open('GEOIDX.txt','a')
-        self.ffv = open('V.txt','a')
-        self.ffsidx = open('SIDX.txt','a')
-        self.ffco = open('CO.txt','a')
-        self.variables_sidx = ['@oName']
+    def __init__(self, company_id, variables_sidx) -> None:
+        self.cID = company_id
+        self.variables_sidx = variables_sidx
         self.cables_fo_coord = []
         self.cables_fo = []
         self.cajas_empalme_coord = []
@@ -33,9 +33,6 @@ class MigrarInfo:
         provided (i.e., `nID == ''`), then the function will assign a new ID using the `asignar_nid` method
         """
 
-
-        if nID == '':
-            nID = self.asignar_nid(oType)
         unixtime = int(time.time())
         id_objeto = f'{self.cID}.{nID}.{id}'
         self.cargar_o(id_objeto, unixtime)
@@ -61,20 +58,9 @@ class MigrarInfo:
         for v in vectores:
             lat = v[0]
             lon = v[1]
-            if oType == 'gc/fo':
-                self.cables_fo_coord.append((lon,lat))
-                self.cables_fo.append(id)
-                count_v += 1
-            elif oType == 'go/fo/nap':
-                self.cajas_empalme_coord.append((lon,lat))
-                self.cajas_empalme.append(id)
-                self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
-                self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
-                count_v += 1
-            else:
-                self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
-                self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
-                count_v += 1
+            self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
+            self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
+            count_v += 1
     
 
     # se asigna el network_id segun el tipo de objeto
