@@ -90,6 +90,8 @@ class MigrarInfo:
         # "SIN DATOS"
 
     def estandarizar(self, s):
+        if not s or type(s) == float:
+            return s
         s = s.replace('"', '')
         s = s.replace("'", "")
         s = s.replace("\t", " ")
