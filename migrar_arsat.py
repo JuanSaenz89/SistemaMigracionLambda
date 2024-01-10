@@ -4,10 +4,10 @@ from KMZReader.db_migration import MigrarInfo
 from openpyxl import load_workbook
 
 # Suponiendo que ya tienes el contenido_kml del archivo KML
-PROVINCIA = 'NEUQUEN'
-ruta_kmz = f'C:/Users/j2sae/Desktop/Trabajo/Delta 2/Neuquen/{PROVINCIA}.kmz'
-path_excel_tramo = 'C:/Users/j2sae/Desktop/Trabajo/Delta 2/240104 ATRIBUTOS TRAMOS Y DERIVACIONES KMZ V68.xlsx'
-path_excel_sitios = 'C:/Users/j2sae/Desktop/Trabajo/Delta 2/240104 SITIOS - (Neuquen) - ACTUALIZACION KMZV68.xlsx'
+PROVINCIA = 'Catamarca'
+ruta_kmz = f'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/Catamarca/{PROVINCIA}.kmz'
+path_excel_tramo = 'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/240104 ATRIBUTOS TRAMOS Y DERIVACIONES KMZ V68.xlsx'
+path_excel_sitios = 'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/240104 SITIOS - (Neuquen) - ACTUALIZACION KMZV68.xlsx'
 lector = LectorKMZ()
 # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
 migrador = MigrarInfo(company_id='30',
@@ -18,9 +18,9 @@ migrador = MigrarInfo(company_id='30',
                                     '@subtramo',
                                     '@tramo'])
 lector.start(ruta_kmz)
-id_objeto = 99483
-fo_net = '23'
-infra_net = '22'
+id_objeto = 528400
+fo_net = '27'
+infra_net = '26'
 nombres_cables = ['COBOS - EL BRACHO TRANSENER','EL BRACHO - COBOS']
 patrones_estilo = ['inline', 'msn_ylw-pushpin', '#route', 'geocode']
 diccionario_sitios = {}
@@ -123,7 +123,7 @@ for i in lector.dict_objetos.values():
                             nID= infra_net)
         id_objeto += 1  # Incrementar el ID del objeto para la siguiente iteración
 
-    elif '#msn_icon' in estilo or '#msn_flag' in estilo or '#Sheet1Map' in estilo:
+    elif '#msn_icon' in estilo or '#msn_flag' in estilo or 'square' in estilo:
         #Si dice la palabra BOX en el nombre se crea un empalme y una caja
         if 'BOX' in nombre:
             migrador.crear_objeto(id=id_objeto,
@@ -168,7 +168,9 @@ for i in lector.dict_objetos.values():
                                 nID= infra_net)
             id_objeto += 1  # Incrementar el ID del objeto para la siguiente iteración
 
-    elif 'square' in estilo or '#msn_grn-stars' in estilo:
+    elif 'square__' in estilo or '#msn_grn-stars' in estilo:
+        print(estilo)
+        print(nombre)
         #se crea una caja y un empalme, pero es otro tipo de icono en el kmz
         migrador.crear_objeto(id=id_objeto,
                             oType='go/fo/cam',
