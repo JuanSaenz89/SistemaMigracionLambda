@@ -4,8 +4,8 @@ from KMZReader.db_migration import MigrarInfo
 from openpyxl import load_workbook
 
 # Suponiendo que ya tienes el contenido_kml del archivo KML
-PROVINCIA = 'Catamarca'
-ruta_kmz = f'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/Catamarca/{PROVINCIA}.kmz'
+PROVINCIA = 'MENDOZA'
+ruta_kmz = f'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/Mendoza/{PROVINCIA}.kmz'
 path_excel_tramo = 'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/240104 ATRIBUTOS TRAMOS Y DERIVACIONES KMZ V68.xlsx'
 path_excel_sitios = 'C:/Users/user/Desktop/Lambda/migraciones/MIGRACION ARSAT/240104 SITIOS - (Neuquen) - ACTUALIZACION KMZV68.xlsx'
 lector = LectorKMZ()
@@ -18,9 +18,9 @@ migrador = MigrarInfo(company_id='30',
                                     '@subtramo',
                                     '@tramo'])
 lector.start(ruta_kmz)
-id_objeto = 528400
-fo_net = '27'
-infra_net = '26'
+id_objeto = 528600
+fo_net = '31'
+infra_net = '30'
 nombres_cables = ['COBOS - EL BRACHO TRANSENER','EL BRACHO - COBOS']
 patrones_estilo = ['inline', 'msn_ylw-pushpin', '#route', 'geocode']
 diccionario_sitios = {}
