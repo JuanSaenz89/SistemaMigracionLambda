@@ -7,11 +7,25 @@ class LectorKMZ:
         self.dict_objetos = {}
         self.contador = 1
 
-    def start(self, ruta_kmz):
-        contenido_kml = self.extraer_kml_desde_kmz(ruta_kmz)
+    def start(self, ruta):
+        if ruta.endswith('.kmz'):
+            contenido_kml = self.extraer_kml_desde_kmz(ruta)
+        elif ruta.endswith('.kml'):
+            with open(ruta, 'r') as file:
+                contenido_kml = file.read()
+        else:
+            raise ValueError("Unsupported file format. Only KMZ and KML files are supported.")
+
         doc_kml = minidom.parseString(contenido_kml)
-        # Busca e imprime la información de cada Placemark
         self.buscar_informacion_kml(doc_kml)
+
+    def extraer_kml_desde_kmz(self, ruta_kmz):
+        with zipfile.ZipFile(ruta_kmz, 'r') as kmz:
+            # Assuming only one KML file exists in the KMZ, extract it
+            kml_file = [name for name in kmz.namelist() if name.endswith('.kml')][0]
+            contenido_kml = kmz.read(kml_file)
+        return contenido_kml
+
 
     def extraer_kml_desde_kmz(self, ruta_kmz):
         # Abre el archivo KMZ y extrae el archivo KML
@@ -28,6 +42,20 @@ class LectorKMZ:
             contenido_kml = archivo_kmz.read(archivo_kml[0])
 
             return contenido_kml.decode('utf-8')
+        
+    def obtener_values(self, placemark):
+        values_list = []
+        value = {}
+        values_placemark = placemark.getElementsByTagName('ExtendedData')[0].getElementsByTagName('SchemaData')
+        for values in values_placemark[0].getElementsByTagName('SimpleData'):
+            try:
+                value[values.getAttribute('name')] = values.firstChild.nodeValue
+            except:
+                value[values.getAttribute('name')] = 'None'
+
+        values_list.append(value)
+
+        return values_list
 
     def obtener_coordenadas_placemark(self, placemark):
         coordenadas = []
@@ -79,13 +107,15 @@ class LectorKMZ:
             coordenadas = self.obtener_coordenadas_placemark(placemark)
             # Obtener información del icono
             estilo = self.obtener_estilo_placemark(placemark)
+            lista_cuadro = self.obtener_values(placemark)
 
             # Almacena la información del Placemark en el diccionario solo si no es una carpeta sin nombre
             self.dict_objetos[self.contador] = {
                 "Nombre": nombre,
                 "Descripción": descripcion,
                 "Coordenadas": coordenadas[0],
-                "Estilo": estilo
+                "Estilo": estilo,
+                "Cuadro": lista_cuadro
             }
             # Incrementa el contador solo si se almacena en el diccionario
             self.contador += 1
