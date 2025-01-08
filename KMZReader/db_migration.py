@@ -55,12 +55,13 @@ class MigrarInfo:
 
     def cargar_v_y_geoidx(self, vectores,id, nID, unixtime, oType):
         count_v = 0
-        for v in vectores:
-            lat = v[0]
-            lon = v[1]
-            self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
-            self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
-            count_v += 1
+        for coord in vectores:
+            for v in coord:
+                lat = v[0]
+                lon = v[1]
+                self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
+                self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
+                count_v += 1
     
 
     # se asigna el network_id segun el tipo de objeto
@@ -111,6 +112,8 @@ class MigrarInfo:
         s = s.replace('ú', 'u')
         s = s.replace('Ñ', 'N')
         s = s.replace('ñ', 'n')
+        s = s.replace('°','')
+        s = s.strip()
         return s
     
     def hacer_conexiones(self, ultimo_id, nid):

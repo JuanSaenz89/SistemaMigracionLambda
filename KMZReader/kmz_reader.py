@@ -107,15 +107,15 @@ class LectorKMZ:
             coordenadas = self.obtener_coordenadas_placemark(placemark)
             # Obtener información del icono
             estilo = self.obtener_estilo_placemark(placemark)
-            lista_cuadro = self.obtener_values(placemark)
+            #lista_cuadro = self.obtener_values(placemark)
 
             # Almacena la información del Placemark en el diccionario solo si no es una carpeta sin nombre
             self.dict_objetos[self.contador] = {
                 "Nombre": nombre,
                 "Descripción": descripcion,
-                "Coordenadas": coordenadas[0],
+                "Coordenadas": coordenadas,
                 "Estilo": estilo,
-                "Cuadro": lista_cuadro
+                #"Cuadro": lista_cuadro
             }
             # Incrementa el contador solo si se almacena en el diccionario
             self.contador += 1
