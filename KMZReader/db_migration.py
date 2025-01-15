@@ -13,10 +13,10 @@ class MigrarInfo:
     def __init__(self, company_id, variables_sidx) -> None:
         self.cID = company_id
         self.variables_sidx = variables_sidx
-        self.cables_fo_coord = []
-        self.cables_fo = []
-        self.cajas_empalme_coord = []
-        self.cajas_empalme = []
+        self.cables_fo_coord = {}
+        self.cables_fo = {}
+        self.cajas_empalme_coord = {}
+        self.cajas_empalme = {}
         
     def crear_objeto(self, id, oType, vectores, vals = '', nID = ''):
 

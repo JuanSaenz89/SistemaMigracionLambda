@@ -6,7 +6,7 @@ from KMZReader.db_migration import MigrarInfo
 ruta_kmz = 'C:/Users/j2sae/Desktop/Trabajo/SistemaMigracionLambda/troncales1.kml'
 lector = LectorKMZ()
 # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
-migrador = MigrarInfo(company_id='121',
+migrador = MigrarInfo(company_id='119',
                     variables_sidx=['@oName',
                                     '@acronimo',
                                     '@nombre',
