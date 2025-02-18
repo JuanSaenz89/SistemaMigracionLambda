@@ -7,7 +7,7 @@ import json
 ruta_kmz = 'C:/Users/j2sae/Desktop/Trabajo/P_POSTE.kml'
 lector = LectorKMZ()
 # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
-migrador = MigrarInfo(company_id='129',
+migrador = MigrarInfo(company_id='130',
                     variables_sidx=['@oName',
                                     '@acronimo',
                                     '@nombre',
@@ -15,12 +15,11 @@ migrador = MigrarInfo(company_id='129',
                                     '@tramo'])
 
 lector.start(ruta_kmz)
-id_objeto = 1000
+id_objeto = 5500
 fo_net = '21'
 infra_net = '24'
 diccionario_json = {}
-company_id='129'
-
+company_id='130'
 
 for i in lector.dict_objetos.values():
     nombre = i['Nombre']
@@ -28,7 +27,6 @@ for i in lector.dict_objetos.values():
     estilo = i['Estilo']
     print(estilo)
     coordenadas = i['Coordenadas']
-    #coordenadas = coordenadas[0]
 
     migrador.crear_objeto(id=id_objeto,
                         oType='go/fo/pos',
@@ -39,8 +37,6 @@ for i in lector.dict_objetos.values():
                         nID=infra_net)
 
     id_objeto += 1  # Incrementar el ID del objeto para la siguiente iteración
-
-
 
 json_string = json.dumps(diccionario_json, indent= 6)
 

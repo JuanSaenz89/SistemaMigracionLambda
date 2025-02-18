@@ -1,13 +1,10 @@
 <configuracion>
 <ocfg>
-	<TRONCAL value="gc/fo" foType="true"/>
 	<SUBTRONCAL value="gc/fo" foType="true"/>
 	<CIERRE value="go/fo/cie" foType="false"/>
-	<NODO value="go/fo/olt" foType="false"/>
-	<CLIENTE value="go/fo/cli" foType="false"/>
 </ocfg>
 <val>
-	<nombre  value = "@oName"/>
+	<Nombre  value = "@oName"/>
 	<descripcion value = "@com"/>
 	<kmlf value = "@foType"/>
 </val>
@@ -27,19 +24,15 @@
 	<H24 value="4|6"/>
 </fo>
 <co>
-	<co1 value = "CIERRE|TRONCAL" />
 	<co2 value = "CIERRE|SUBTRONCAL" />
 </co>
 <data>
-	<company value = "129" />
+	<company value = "130" />
 	<network>
-		<TRONCAL value = "1" />
-		<SUBTRONCAL value = "1" />
-		<CIERRE value = "1" />
-		<NODO value = "1" />
-		<CLIENTE value = "3" />
+		<SUBTRONCAL value = "21" />
+		<CIERRE value = "21" />
 	</network>
-	<id value = "100000" />
+	<id value = "15000" />
 	<unixtime value = "1709042342" />
 </data>	
 <cota>
