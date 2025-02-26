@@ -196,24 +196,66 @@ class MigradorBCM():
 
     def crearCable(self, idUno, coordenadaUno, idDos, coordenadaDos, tipoCable):
         idCable = f"{COMPANY_ID}.{self.fo_net}.{self.objectID}"
+        idCliente = f"{COMPANY_ID}.{self.clientNetID}.{idUno}"
+        idCierre = f"{COMPANY_ID}.{self.fo_net}.{idDos}"
         longitudUno = coordenadaUno[0][0][0]  # Primer elemento de la primera lista
         latitudUno = coordenadaUno[0][0][1]
         longitudDos = coordenadaDos[0][0][0]  # Primer elemento de la primera lista
         latitudDos = coordenadaDos[0][0][1]
-        with open('CABLES.txt','w') as ffcables:
+        with open('CABLES.txt','a') as ffcables:
             # escribimos el O
-            ffcables.write(f'SET {COMPANY_ID}.{self.fo_net}.{self.objectID} "{UNIXTIME}..1."\n') 
+            ffcables.write(f'SET {idCable} "{UNIXTIME}..1."\n') 
             # escribimos el OCFG
-            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:ocfg "{UNIXTIME}..1.:gc/fo"\n') 
+            ffcables.write(f'SADD {idCable}:ocfg "{UNIXTIME}..1.:gc/fo"\n') 
             # escribimos los VALS
-            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:val "{UNIXTIME}..1.:@foType|{tipoCable}|0"\n')
+            ffcables.write(f'SADD {idCable}:val "{UNIXTIME}..1.:@foType|{tipoCable}|0"\n')
             # escribimos los V (Vectores) 
-            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:v "{UNIXTIME}..1.:{latitudUno}|{longitudUno}|0|0"\n')
-            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:v "{UNIXTIME}..1.:{latitudDos}|{longitudDos}|1|0"\n') 
+            ffcables.write(f'SADD {idCable}:v "{UNIXTIME}..1.:{latitudUno}|{longitudUno}|0|0"\n')
+            ffcables.write(f'SADD {idCable}:v "{UNIXTIME}..1.:{latitudDos}|{longitudDos}|1|0"\n') 
             # escribimos los GEO
             ffcables.write(f'GEOADD {COMPANY_ID}.{self.fo_net}:geoidx {longitudUno} {latitudUno} "{UNIXTIME}..1.:{idCable}|0|2"\n')
             ffcables.write(f'GEOADD {COMPANY_ID}.{self.fo_net}:geoidx {longitudDos} {latitudDos} "{UNIXTIME}..1.:{idCable}|1|2"\n')
             # hacemos las conexiones
+            ffcables.write(f'SADD {idCliente}:co "{UNIXTIME}..1.:2|{idCable}|1"\n')
+            ffcables.write(f'SADD {idCable}:co "{UNIXTIME}..1.:1|{idCliente}|2"\n')
+            ffcables.write(f'SADD {idCierre}:co "{UNIXTIME}..1.:1|{idCable}|2"\n')
+            ffcables.write(f'SADD {idCable}:co "{UNIXTIME}..1.:2|{idCierre}|1"\n')
+            # Creamos los objetos internos
+            self.objectID += 1
+            idObjetoInterno = f"{COMPANY_ID}.100.{self.objectID}"
+            
+            vals = {
+                    '@color' : 'GR',
+                    '@io' : f'{idCable}',
+                    '@io0' : f'{idCable}',
+                    '@name' : '1',
+                    '@order' : '0'
+                    }
+            self.crearIO(idCable, idObjetoInterno, 'io/fo/t', vals)
+
+    def crearIO(self, Padre, ID, oType, vals):
+        with open('CABLES.txt','a') as ffcables:
+            ffcables.write(f'SADD {Padre}:io "{UNIXTIME}..1.:{ID}"\n')
+            ffcables.write(f'SET {ID} "{UNIXTIME}..1."\n') 
+            # escribimos el OCFG
+            ffcables.write(f'SADD {ID}:ocfg "{UNIXTIME}..1.:{oType}"\n') 
+            # escribimos los VALS
+            for key, value in vals.items():
+                ffcables.write(f'SADD {ID}:val "{UNIXTIME}..1.:{key}|{value}|0"\n')
+        
+        if oType == 'io/fo/t':
+            self.objectID += 1
+            idObjetoInterno = f"{COMPANY_ID}.100.{self.objectID}"
+            vals = {
+                    '@color' : 'GR',
+                    '@io' : f'{ID}',
+                    '@io0' : f'{ID}',
+                    '@name' : '1',
+                    '@order' : '0'
+                    }
+            self.crearIO(ID, idObjetoInterno, 'io/fo/h', vals)
+
+            
 
     def cambiarNombrePadre(self, padre):
         try:
