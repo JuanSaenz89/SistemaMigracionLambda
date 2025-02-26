@@ -1,12 +1,16 @@
 
 from KMZReader.db_migration import MigrarInfo
 from openpyxl import load_workbook
+import time
 import re
+
+
+COMPANY_ID = '131'
+UNIXTIME = int(time.time())
 
 class MigradorBCM():
 
     # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
-
     migrador = MigrarInfo(company_id='131',
                     variables_sidx=['@oName',
                                     '@kmlId',
@@ -15,8 +19,8 @@ class MigradorBCM():
     def __init__(self):
 
         # Aqui van las rutas de los excels de clientes y de Splitters y Naps
-        self.ruta_excel = '/home/linux/Downloads/Listado por Origen - Estandarizado - Lujan.xlsx'
-        self.ruta_excel_clientes = '/home/linux/Downloads/Red por Cliente - Lujan.xlsx'
+        self.ruta_excel = 'C:/Users/j2sae/Downloads/Listado por Origen - Estandarizado - Lujan.xlsx'
+        self.ruta_excel_clientes = 'C:/Users/j2sae/Downloads/Red por Cliente - Lujan.xlsx'
 
         self.objectID = 1 # ID en el que se comienza a crear los objetos
         self.fo_net = input('Ingrese el Id de la capa de FO: ')
@@ -27,13 +31,16 @@ class MigradorBCM():
         self.CierresDict = {}
         self.ClientsDict = {}
     
+
     def start(self):
-        self.migrateCierres(self.ruta_excel, 'Listado por Origen')
+        self.migrateCierres(self.ruta_excel)
+        self.migrateClientes(self.ruta_excel_clientes)
+        self.conectarClientesANaps()
 
 
-    def migrateCierres(self, filename, pageName):
+    def migrateCierres(self, filename):
         wb = load_workbook(filename = filename)
-        hoja = wb[pageName]
+        hoja = wb['Listado por Origen']
 
         for i in range(5,hoja.max_row + 1):
             id = hoja.cell(row=i, column=1).value
@@ -52,6 +59,7 @@ class MigradorBCM():
             coordenadas = [[[longitud , latitud]]]
             
             if tipo == 'FO: Distribución / NAP':
+
                 if '_' in equipamiento:
                     equipamiento = equipamiento.split('_')
                     nombre = equipamiento[1]
@@ -61,12 +69,17 @@ class MigradorBCM():
                     '@oType': '2N',
                     '@ref': direccion
                 }
-                self.migrador.crear_objeto(id=objectID,
+
+                self.migrador.crear_objeto(id=self.objectID,
                                 oType='go/fo/cie',
                                 vectores=coordenadas,
                                 vals=vals,
                                 nID=self.fo_net)
-                objectID += 1  # Incrementar el ID del objeto para la siguiente iteración
+                
+                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas)
+
+                self.objectID += 1  # Incrementar el ID del objeto para la siguiente iteración
+
             elif tipo == 'FO: Sangrado / FDH':
 
                 if '_' in equipamiento:
@@ -85,14 +98,22 @@ class MigradorBCM():
                     '@oType': '1N',
                     '@ref': direccion
                 }
-                self.migrador.crear_objeto(id=objectID,
+                self.migrador.crear_objeto(id=self.objectID,
                                 oType='go/fo/cie',
                                 vectores=coordenadas,
                                 vals=vals,
                                 nID=self.fo_net)
-                objectID += 1  # Incrementar el ID del objeto para la siguiente iteración
+                
+                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas)
 
+                self.objectID += 1 
 
+    def poblarDiccionarioCierres(self, nombre, padreDirecto, coordenadas):
+
+        self.CierresDict[self.objectID] = {'Vectores': coordenadas,
+                                                   'Nombre': nombre,
+                                                   'Padre': padreDirecto
+                                                   } 
 
     def migrateClientes(self, filename):
         wb = load_workbook(filename=filename)
@@ -116,12 +137,13 @@ class MigradorBCM():
             claveSsid = hoja.cell(row=i, column=15).value
             ssid5 = hoja.cell(row=i, column=16).value
             claveSsid5 = hoja.cell(row=i, column=17).value
-            padreDirecto = hoja.cell(row=i, column=19).value
+            padreDirecto = hoja.cell(row=i, column=18).value
             padre = hoja.cell(row=i, column=19).value
             com = hoja.cell(row=i, column=20).value
 
             if not latitud or not longitud:
                 continue
+
             coordenadas = [[[longitud , latitud]]]
 
             vals = {
@@ -152,4 +174,53 @@ class MigradorBCM():
                                 vectores=coordenadas,
                                 vals=vals_filtrados,
                                 nID=self.clientNetID)
+            
+            self.ClientsDict[self.objectID] = {'Vectores' : coordenadas,
+                                               'Padre' : padreDirecto}
+
             self.objectID += 1  # Incrementar el ID del objeto para la siguiente iteración    
+
+    def conectarClientesANaps(self):
+        for oID, dictCliente in self.ClientsDict.items():
+            padre = dictCliente['Padre']
+            padreArreglado = self.cambiarNombrePadre(padre)
+            vectorCliente = dictCliente['Vectores']
+
+            for cierreOID, dictCierre in self.CierresDict.items():
+                nombreCierre = dictCierre['Nombre']
+                vectorCierre = dictCierre['Vectores']
+
+                if padre == nombreCierre or padreArreglado == nombreCierre:
+                    self.crearCable(oID, vectorCliente, cierreOID, vectorCierre,'DROP')
+                    self.objectID += 1
+
+    def crearCable(self, idUno, coordenadaUno, idDos, coordenadaDos, tipoCable):
+        idCable = f"{COMPANY_ID}.{self.fo_net}.{self.objectID}"
+        longitudUno = coordenadaUno[0][0][0]  # Primer elemento de la primera lista
+        latitudUno = coordenadaUno[0][0][1]
+        longitudDos = coordenadaDos[0][0][0]  # Primer elemento de la primera lista
+        latitudDos = coordenadaDos[0][0][1]
+        with open('CABLES.txt','w') as ffcables:
+            # escribimos el O
+            ffcables.write(f'SET {COMPANY_ID}.{self.fo_net}.{self.objectID} "{UNIXTIME}..1."\n') 
+            # escribimos el OCFG
+            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:ocfg "{UNIXTIME}..1.:gc/fo"\n') 
+            # escribimos los VALS
+            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:val "{UNIXTIME}..1.:@foType|{tipoCable}|0"\n')
+            # escribimos los V (Vectores) 
+            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:v "{UNIXTIME}..1.:{latitudUno}|{longitudUno}|0|0"\n')
+            ffcables.write(f'SADD {COMPANY_ID}.{self.fo_net}.{self.objectID}:v "{UNIXTIME}..1.:{latitudDos}|{longitudDos}|1|0"\n') 
+            # escribimos los GEO
+            ffcables.write(f'GEOADD {COMPANY_ID}.{self.fo_net}:geoidx {longitudUno} {latitudUno} "{UNIXTIME}..1.:{idCable}|0|2"\n')
+            ffcables.write(f'GEOADD {COMPANY_ID}.{self.fo_net}:geoidx {longitudDos} {latitudDos} "{UNIXTIME}..1.:{idCable}|1|2"\n')
+            # hacemos las conexiones
+
+    def cambiarNombrePadre(self, padre):
+        try:
+            pattern = r"(Caja\d+-Nodo\d+)"
+            match = re.search(pattern, padre)
+            return match.group(1) if match else None
+        except TypeError:
+            return ''
+    
+MigradorBCM().start()
