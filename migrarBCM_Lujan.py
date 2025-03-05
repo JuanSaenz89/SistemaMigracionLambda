@@ -23,20 +23,22 @@ class MigradorBCM():
         self.ruta_excel_clientes = 'C:/Users/j2sae/Downloads/Red por Cliente - Lujan.xlsx'
 
         self.objectID = 1 # ID en el que se comienza a crear los objetos
-        self.fo_net = input('Ingrese el Id de la capa de FO: ')
-        self.infra_net = input('Ingrese el Id de la capa de Infraestructura: ')
-        self.clientNetID = input('Ingrese el Id de la capa de Clientes: ')
+        self.fo_net = 1#input('Ingrese el Id de la capa de FO: ')
+        self.infra_net = 4#input('Ingrese el Id de la capa de Infraestructura: ')
+        self.clientNetID = 2#input('Ingrese el Id de la capa de Clientes: ')
 
         self.nameList = []
         self.CierresDict = {}
+        self.EmpalmesDict = {}
         self.ClientsDict = {}
+        self.CierresOrdenadosPorPadreDict = {}
     
 
     def start(self):
         self.migrateCierres(self.ruta_excel)
         self.migrateClientes(self.ruta_excel_clientes)
         self.conectarClientesANaps()
-
+        self.conectarNaps()
 
     def migrateCierres(self, filename):
         wb = load_workbook(filename = filename)
@@ -76,7 +78,7 @@ class MigradorBCM():
                                 vals=vals,
                                 nID=self.fo_net)
                 
-                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas)
+                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas, self.CierresDict)
 
                 self.objectID += 1  # Incrementar el ID del objeto para la siguiente iteración
 
@@ -104,21 +106,41 @@ class MigradorBCM():
                                 vals=vals,
                                 nID=self.fo_net)
                 
-                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas)
+                self.poblarDiccionarioCierres(nombre, padreDirecto, coordenadas, self.EmpalmesDict)
 
                 self.objectID += 1 
 
-    def poblarDiccionarioCierres(self, nombre, padreDirecto, coordenadas):
+    def poblarDiccionarioCierres(self, nombre, padreDirecto, coordenadas, diccionario):
 
-        self.CierresDict[self.objectID] = {'Vectores': coordenadas,
-                                                   'Nombre': nombre,
-                                                   'Padre': padreDirecto
-                                                   } 
+        numeroCaja = nombre
+        # Expresión regular para capturar el número después de "Caja"
+        match = re.search(r'Caja(\d+)', nombre)
+        if match:
+            numeroCaja = int(match.group(1))  # Convertimos el número a entero
+
+        diccionario[self.objectID] = {
+                                        'Vectores': coordenadas,
+                                        'Nombre': nombre,
+                                        'Padre': padreDirecto
+                                        }
+        if diccionario == self.CierresDict:
+                self.CierresOrdenadosPorPadreDict.setdefault(padreDirecto, {})[numeroCaja] = ({
+                'Vectores': coordenadas,
+                'Nombre': nombre,
+                'ID': self.objectID
+                })
+    
+    def poblarDiccionarioClientes(self, padreDirecto, coordenadas):
+        self.ClientsDict[self.objectID] = {
+                                            'Vectores' : coordenadas,
+                                            'Padre' : padreDirecto
+                                            }
 
     def migrateClientes(self, filename):
         wb = load_workbook(filename=filename)
         hoja = wb['Red Por Cliente']
         unixtime = "1..1."
+
         for i in range(5,hoja.max_row + 1):
             numero = hoja.cell(row=i, column=1).value
             nombre = hoja.cell(row=i, column=2).value
@@ -175,10 +197,9 @@ class MigradorBCM():
                                 vals=vals_filtrados,
                                 nID=self.clientNetID)
             
-            self.ClientsDict[self.objectID] = {'Vectores' : coordenadas,
-                                               'Padre' : padreDirecto}
+            self.poblarDiccionarioClientes(padreDirecto, coordenadas)
 
-            self.objectID += 1  # Incrementar el ID del objeto para la siguiente iteración    
+            self.objectID += 1 # Incrementar el ID del objeto para la siguiente iteración    
 
     def conectarClientesANaps(self):
         for oID, dictCliente in self.ClientsDict.items():
@@ -202,6 +223,7 @@ class MigradorBCM():
         latitudUno = coordenadaUno[0][0][1]
         longitudDos = coordenadaDos[0][0][0]  # Primer elemento de la primera lista
         latitudDos = coordenadaDos[0][0][1]
+
         with open('CABLES.txt','a') as ffcables:
             # escribimos el O
             ffcables.write(f'SET {idCable} "{UNIXTIME}..1."\n') 
@@ -221,17 +243,19 @@ class MigradorBCM():
             ffcables.write(f'SADD {idCierre}:co "{UNIXTIME}..1.:1|{idCable}|2"\n')
             ffcables.write(f'SADD {idCable}:co "{UNIXTIME}..1.:2|{idCierre}|1"\n')
             # Creamos los objetos internos
-            self.objectID += 1
-            idObjetoInterno = f"{COMPANY_ID}.100.{self.objectID}"
-            
-            vals = {
-                    '@color' : 'GR',
-                    '@io' : f'{idCable}',
-                    '@io0' : f'{idCable}',
-                    '@name' : '1',
-                    '@order' : '0'
-                    }
-            self.crearIO(idCable, idObjetoInterno, 'io/fo/t', vals)
+
+        self.objectID += 1
+        idObjetoInterno = f"{COMPANY_ID}.100.{self.objectID}"
+        
+        vals = {
+                '@color' : 'GR',
+                '@io' : f'{idCable}',
+                '@io0' : f'{idCable}',
+                '@name' : '1',
+                '@order' : '0'
+                }
+        
+        self.crearIO(idCable, idObjetoInterno, 'io/fo/t', vals)
 
     def crearIO(self, Padre, ID, oType, vals):
         with open('CABLES.txt','a') as ffcables:
@@ -255,8 +279,6 @@ class MigradorBCM():
                     }
             self.crearIO(ID, idObjetoInterno, 'io/fo/h', vals)
 
-            
-
     def cambiarNombrePadre(self, padre):
         try:
             pattern = r"(Caja\d+-Nodo\d+)"
@@ -264,5 +286,22 @@ class MigradorBCM():
             return match.group(1) if match else None
         except TypeError:
             return ''
-    
+
+    def conectarNaps(self):
+        count = 0
+        for padre, naps in self.CierresOrdenadosPorPadreDict.items():
+            cantidadCajas = len(naps)
+
+            for i in range(cantidadCajas - 1):
+
+                caja_actual = naps[i]
+                caja_siguiente = naps[i + 1]
+                idNapUno = caja_actual['ID']
+                idNapDos = caja_siguiente['ID']
+                vectorNapUno = caja_actual['Vectores']
+                vectorNapDos = caja_siguiente['Vectores']
+                self.crearCable(idNapUno, vectorNapUno, idNapDos, vectorNapDos,'DROP')
+                 # Llamamos a la función para crear la conexión
+
+
 MigradorBCM().start()

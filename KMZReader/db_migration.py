@@ -49,7 +49,11 @@ class MigrarInfo:
     def cargar_val_y_sidx(self, id , vals, unixtime):
         for variable, valor in vals.items():
             valor = self.estandarizar(valor)
-            self.ffval.write(f'SADD {id}:val "{unixtime}..1.:{variable}|{valor}|0"\n')
+            try:
+                self.ffval.write(f'SADD {id}:val "{unixtime}..1.:{variable}|{valor}|0"\n')
+            except UnicodeEncodeError:
+                valorNuevo = valor.encode("ascii", "ignore").decode("ascii")
+                self.ffval.write(f'SADD {id}:val "{unixtime}..1.:{variable}|{valorNuevo}|0"\n')
             if variable in self.variables_sidx:
                 self.ffsidx.write(f'ZADD {self.cID}.{variable}.sidx 0 "{valor}:{unixtime}..1.:{id}"\n')
 
@@ -91,30 +95,33 @@ class MigrarInfo:
         # "SIN DATOS"
 
     def estandarizar(self, s):
-        if not s or type(s) == float:
+        if not s or type(s) == float or type(s) == int:
             return s
-        s = s.replace('"', '')
-        s = s.replace("'", "")
-        s = s.replace("\t", " ")
-        s = s.replace("\n"," ")
-        s = s.replace("\r", " ")
-        s = s.replace(":", " ")
-        s = s.replace("|", " ")
-        s = s.replace('Á','A')
-        s = s.replace('á','a')
-        s = s.replace('É', 'E')
-        s = s.replace('é', 'e')
-        s = s.replace('Í', 'I')
-        s = s.replace('í', 'i')
-        s = s.replace('Ó', 'O')
-        s = s.replace('ó', 'o')
-        s = s.replace('Ú', 'U')
-        s = s.replace('ú', 'u')
-        s = s.replace('Ñ', 'N')
-        s = s.replace('ñ', 'n')
-        s = s.replace('°','')
-        s = s.strip()
-        return s
+        try:
+            s = s.replace('"', '')
+            s = s.replace("'", "")
+            s = s.replace("\t", " ")
+            s = s.replace("\n"," ")
+            s = s.replace("\r", " ")
+            s = s.replace(":", " ")
+            s = s.replace("|", " ")
+            s = s.replace('Á','A')
+            s = s.replace('á','a')
+            s = s.replace('É', 'E')
+            s = s.replace('é', 'e')
+            s = s.replace('Í', 'I')
+            s = s.replace('í', 'i')
+            s = s.replace('Ó', 'O')
+            s = s.replace('ó', 'o')
+            s = s.replace('Ú', 'U')
+            s = s.replace('ú', 'u')
+            s = s.replace('Ñ', 'N')
+            s = s.replace('ñ', 'n')
+            s = s.replace('°','')
+            s = s.strip()
+            return s
+        except Exception as e:
+            print(e)
     
     def hacer_conexiones(self, ultimo_id, nid):
         unixtime = int(time.time())

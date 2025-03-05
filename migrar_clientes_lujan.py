@@ -1,10 +1,9 @@
-
 from KMZReader.db_migration import MigrarInfo
 from openpyxl import load_workbook
 
 # Suponiendo que ya tienes el contenido_kml del archivo KML
 ruta_excel_clientes = '/home/linux/Downloads/Red por Cliente.xlsx'
-
+COMPANY_ID = '132'
 # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
 migrador = MigrarInfo(company_id='131',
                     variables_sidx=['@oName',
