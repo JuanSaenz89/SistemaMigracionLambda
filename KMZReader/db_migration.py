@@ -64,7 +64,7 @@ class MigrarInfo:
                 lat = v[0]
                 lon = v[1]
                 self.ffv.write(f'SADD {id}:v "{unixtime}..1.:{lon}|{lat}|{count_v}|0"\n')
-                self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores)}"\n')
+                self.ffgeoidx.write(f'GEOADD {self.cID}.{nID}:geoidx {lat} {lon} "{unixtime}..1.:{id}|{count_v}|{len(vectores[0])}"\n')
                 count_v += 1
     
 

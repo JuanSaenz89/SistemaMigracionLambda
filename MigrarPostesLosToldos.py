@@ -3,7 +3,7 @@ from openpyxl import load_workbook
 import re
 
 # Suponiendo que ya tienes el contenido_kml del archivo KML
-ruta_excel_cables = 'C:/Users/j2sae/Documents/Cables - Los Toldos.xlsx'
+ruta_excel_cables = 'C:/Users/j2sae/Documents/Postes.xlsx'
 COMPANY_ID = '132'
 # En el objeto MigrarInfo se asignan las variables del ID de la compania y las variables que seran cargadas tambien en el sidx
 migrador = MigrarInfo(company_id='132',
@@ -11,7 +11,7 @@ migrador = MigrarInfo(company_id='132',
                                     '@kmlId',
                                     ])
 
-objectID = 7000
+objectID = 7500
 fo_net = '1'
 infra_net = '4'
 clientNetID = '2'
@@ -22,16 +22,16 @@ hoja = wb.active
 unixtime = "1..1."
 for i in range(5,hoja.max_row + 1):
 
-    ladoUno = hoja.cell(row=i, column=1).value
-    ladoDos = hoja.cell(row=i, column=1).value
-    vectores = hoja.cell(row=i, column=2).value #TODO limpiar vectores
-
-    patron = r"(-?\d+\.\d+)@(-?\d+\.\d+)"
-    coordenadas = re.findall(patron, vectores)
-    coordenadas = [coordenadas]
-
+    nombre = hoja.cell(row=i, column=1).value
+    altura = hoja.cell(row=i, column=3).value
+    tipo = hoja.cell(row=i, column=4).value
+    latitud = hoja.cell(row=i, column=8).value
+    longitud = hoja.cell(row=i, column=9).value
+    latitudConvertida = 
+    longitudConvertida = 
+    coordenadas = [[latitud,longitud]]
     migrador.crear_objeto(id=objectID,
-                          oType='gc/fo',
+                          oType='go/pos',
                           vectores=coordenadas,
                           vals={
                               '@foType': '12'
